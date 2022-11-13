@@ -3,7 +3,7 @@
 host="@"
 domain_name="example.com"
 ddns_password="adf154kjb34igkv43i8y7adsf97"
-
+tmp_timeout=1440    # validity of tmp file in minutes
 
 ###########################################
 ## Check if we have a public IP
@@ -30,8 +30,8 @@ fi
 ###########################################
 ## Check the website's IP address
 ###########################################
-if [[ ${your_ip} == $(</tmp/ddns_updater) ]]; then
-    logger "DDNS Updater: IP (${your_ip}) for ${domain_name} has not changed as per /tmp/ddns_updater"
+if [[ -n $(find /tmp/ddns_updater -mmin -$tmp_timeout) && ${your_ip} == $(cat /tmp/ddns_updater) ]]; then
+    logger "DDNS Updater: IP (${your_ip}) for ${domain_name} has not changed as per tmp file."
     exit 0
 else
     website_ip=$(host -t A ${domain_name} | awk -F "address " '{print $2}')
