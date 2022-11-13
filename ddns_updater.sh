@@ -30,7 +30,7 @@ fi
 ###########################################
 ## Check the website's IP address
 ###########################################
-if [[ -n $(find /tmp/ddns_updater -mmin -$tmp_timeout) && ${your_ip} == $(cat /tmp/ddns_updater) ]]; then
+if [[ -n $(find /tmp/ddns_updater -mmin -$tmp_timeout 2>/dev/null) && ${your_ip} == $(cat /tmp/ddns_updater) ]]; then
     logger "DDNS Updater: IP (${your_ip}) for ${domain_name} has not changed as per tmp file."
     exit 0
 else
