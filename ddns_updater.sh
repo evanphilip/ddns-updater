@@ -31,10 +31,14 @@ fi
 ## Check the website's IP address
 ###########################################
 if [[ -n $(find /tmp/ddns_updater -mmin -$tmp_timeout 2>/dev/null) && ${your_ip} == $(cat /tmp/ddns_updater) ]]; then
-    logger "DDNS Updater: IP (${your_ip}) for ${domain_name} has not changed as per tmp file."
+    # logger "DDNS Updater: IP (${your_ip}) for ${host}.${domain_name} has not changed as per tmp file."
     exit 0
 else
-    website_ip=$(host -t A ${domain_name} | awk -F "address " '{print $2}')
+    if [[ ${host} == "@" ]]; then
+      website_ip=$(host -t A ${domain_name} | awk -F "address " '{print $2}')
+    else
+      website_ip=$(host -t A ${host}.${domain_name} | awk -F "address " '{print $2}')
+    fi
 fi
 
 # Use regex to check for proper IPv4 format.
@@ -47,18 +51,18 @@ fi
 ## Change the IP using the API
 ###########################################
 if [[ ${your_ip} == ${website_ip} ]]; then
-  logger "DDNS Updater: IP (${website_ip}) for ${domain_name} has not changed."
+  logger "DDNS Updater: IP (${website_ip}) for ${host}.${domain_name} has not changed."
   echo $website_ip > /tmp/ddns_updater
   exit 0
 else
-  logger "DDNS Updater: IP for ${domain_name} has to be updated from ${website_ip} to ${your_ip}."
+  logger "DDNS Updater: IP for ${host}.${domain_name} has to be updated from ${website_ip} to ${your_ip}."
   update=$(curl -s "https://dynamicdns.park-your-domain.com/update?host=$host&domain=$domain_name&password=$ddns_password&ip=$your_ip")
   ret=$(echo $update | grep "<ErrCount>0</ErrCount><errors /><ResponseCount>0</ResponseCount><responses /><Done>true</Done>"); ret=$?
   if [[ ! $ret == 0 ]]; then
       logger -s "DDNS Updater: Failed to update IP using API"
       logger "DDNS Updater: Request returned $update "
       exit 2
-  else 
+  else
       logger "DDNS Updater: API update request for IP successful."
       echo $your_ip > /tmp/ddns_updater
       exit 0
